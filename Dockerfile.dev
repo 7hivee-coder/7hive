@@ -1,0 +1,13 @@
+FROM node:22-alpine
+
+WORKDIR /usr/src/app
+
+# Upgrade npm to match packageManager field in package.json
+RUN npm install -g npm@11.3.0
+
+COPY package*.json ./
+RUN npm ci
+
+EXPOSE 4200
+
+CMD ["npx", "ng", "serve", "--host", "0.0.0.0", "--poll", "2000", "--proxy-config", "proxy.conf.json"]

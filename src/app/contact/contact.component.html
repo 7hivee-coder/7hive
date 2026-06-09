@@ -1,0 +1,69 @@
+<section
+  id="contact"
+  class="border border-gray-200 rounded-lg shadow-lg overflow-hidden mb-6"
+>
+  <h2 class="text-2xl font-bold mb-4">Contact Us</h2>
+  <p class="mb-6" style="color: var(--text-secondary)">
+    Have questions or want to work together? Fill out the form below and we'll
+    get back to you as soon as possible.
+  </p>
+
+  <!-- Success state -->
+  <div *ngIf="submitted" class="success-banner">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span>Message sent! We'll get back to you soon.</span>
+    <button (click)="resetForm()" class="success-reset">Send another</button>
+  </div>
+
+  <!-- Error message -->
+  <div *ngIf="submitError" class="error-banner">{{ submitError }}</div>
+
+  <!-- Form -->
+  <form *ngIf="!submitted" [formGroup]="contactForm" class="space-y-4">
+    <div>
+      <label for="name" class="block text-sm font-medium mb-1">Name</label>
+      <input
+        formControlName="name"
+        type="text"
+        id="name"
+        placeholder="Your Name"
+        class="mt-1 w-full rounded-md p-2.5"
+      />
+    </div>
+
+    <div>
+      <label for="email" class="block text-sm font-medium mb-1">Email</label>
+      <input
+        formControlName="email"
+        type="email"
+        id="email"
+        placeholder="Your Email"
+        class="mt-1 w-full rounded-md p-2.5"
+      />
+    </div>
+
+    <div>
+      <label for="message" class="block text-sm font-medium mb-1">Message</label>
+      <textarea
+        formControlName="message"
+        id="message"
+        rows="4"
+        placeholder="Your Message"
+        class="mt-1 w-full rounded-md p-2.5"
+      ></textarea>
+    </div>
+
+    <div class="flex justify-center">
+      <button
+        (click)="onSave()"
+        type="submit"
+        [disabled]="contactForm.invalid || submitting"
+        class="submit-btn px-20 py-4 text-white rounded-md text-sm font-medium"
+      >
+        {{ submitting ? 'Sending...' : 'Send Message' }}
+      </button>
+    </div>
+  </form>
+</section>
