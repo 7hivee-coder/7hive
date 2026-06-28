@@ -1,5 +1,6 @@
 # Production Docker Compose Configuration
-# Use this for AWS deployment with: docker compose -f docker-compose.prod.yml up -d
+# Local build:  docker compose -f docker-compose.prod.yml up --build -d
+# CI/CD deploy: DOCKERHUB_USERNAME=youruser docker compose -f docker-compose.prod.yml up -d
 
 services:
   db:
@@ -25,6 +26,7 @@ services:
         max-file: "3"
 
   backend:
+    image: ${DOCKERHUB_USERNAME:-}/7hive-backend:latest
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -52,6 +54,7 @@ services:
         max-file: "3"
 
   frontend:
+    image: ${DOCKERHUB_USERNAME:-}/7hive-frontend:latest
     build:
       context: .
       dockerfile: Dockerfile
