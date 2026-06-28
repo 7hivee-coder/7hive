@@ -26,11 +26,12 @@ services:
         max-file: "3"
 
   backend:
-    image: ${DOCKERHUB_USERNAME:-}/7hive-backend:latest
     build:
       context: ./backend
       dockerfile: Dockerfile
     restart: always
+    ports:
+      - "8000:8000"
     environment:
       DATABASE_URL: ${DATABASE_URL}
       CORS_ORIGINS: ${CORS_ORIGINS}
@@ -54,7 +55,6 @@ services:
         max-file: "3"
 
   frontend:
-    image: ${DOCKERHUB_USERNAME:-}/7hive-frontend:latest
     build:
       context: .
       dockerfile: Dockerfile
