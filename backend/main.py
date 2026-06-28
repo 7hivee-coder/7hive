@@ -12,7 +12,6 @@ from fastapi import (
     HTTPException,
     status,
     Security,
-    Request
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -26,6 +25,10 @@ from database import engine, SessionLocal
 
 # Create tables
 models.Base.metadata.create_all(bind=engine)
+
+
+def public_upload_url(path: str) -> str:
+    return "/" + path.lstrip("/")
 
 # Disable default docs
 app = FastAPI(
@@ -126,13 +129,12 @@ def upload_images(
 # -------------------------------
 @app.get("/images/", response_model=List[schemas.ImageResponse])
 def list_images(
-    request: Request,
     db: Session = Depends(get_db),
 ):
     images = crud.get_images(db)
 
     for img in images:
-        img.filepath = str(request.base_url) + img.filepath
+        img.filepath = public_upload_url(img.filepath)
 
     return images
 
@@ -180,13 +182,12 @@ def upload_team_images(
 
 @app.get("/teamimages", response_model=List[schemas.TeamImageResponse])
 def get_team_images(
-    request: Request,
     db: Session = Depends(get_db),
 ):
     images = crud.get_team_images(db)
 
     for img in images:
-        img.filepath = str(request.base_url) + "uploads/" + img.filepath
+        img.filepath = public_upload_url("uploads/" + img.filepath)
 
     return images
 
@@ -245,12 +246,11 @@ def create_team_member(
 
 @app.get("/team-members", response_model=List[schemas.TeamMemberResponse])
 def get_team_members(
-    request: Request,
     db: Session = Depends(get_db),
 ):
     members = crud.get_team_members(db)
     for m in members:
-        m.filepath = str(request.base_url) + "uploads/" + m.filepath
+        m.filepath = public_upload_url("uploads/" + m.filepath)
     return members
 
 
