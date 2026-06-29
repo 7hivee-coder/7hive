@@ -30,17 +30,6 @@ button[disabled] {
   cursor: not-allowed;
 }
 
-.submit-btn {
-  background: var(--text-primary);
-  color: var(--bg-primary);
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.submit-btn:hover:not(:disabled) {
-  opacity: 0.8;
-}
 
 .success-banner {
   display: flex;
@@ -76,7 +65,59 @@ button[disabled] {
   margin-bottom: 16px;
   font-size: 14px;
 }
+.submit-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
 
+.submit-btn {
+  min-width: 220px;
+  height: 54px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: 1.5px solid var(--text-primary);
+  border-radius: 12px;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 14px 28px rgba(0,0,0,.18);
+}
+
+.submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submit-btn:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+  transform: none;
+  box-shadow: none;
+}
+
+
+@media (max-width: 768px) {
+  .submit-btn {
+    width: 100%;
+    max-width: 340px;
+    min-width: unset;
+    height: 52px;
+    font-size: 15px;
+  }
+}
 /* Support utility-like classes used in template */
 .space-y-4 > * + * { margin-top: 1rem; }
 .flex { display: flex; }
