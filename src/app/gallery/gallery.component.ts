@@ -18,7 +18,7 @@ type Variant = 'small-left' | 'small-right' | 'wide-left' | 'wide-right';
            [class.wide-left]="item.variant === 'wide-left'"
            [class.wide-right]="item.variant === 'wide-right'">
 
-        <img [src]="item.url" alt="portfolio image" loading="lazy" />
+        <img [src]="item.url" alt="Home image" loading="lazy" />
       </div>
 
     </section>

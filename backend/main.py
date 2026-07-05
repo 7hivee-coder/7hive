@@ -292,3 +292,165 @@ def get_enquiries(
     db: Session = Depends(get_db),
 ):
     return crud.get_enquiries(db)
+
+
+# -------------------------------------------------------
+# PORTFOLIO
+# -------------------------------------------------------
+
+PORTFOLIO_UPLOAD_FOLDER = "uploads/portfolio"
+os.makedirs(PORTFOLIO_UPLOAD_FOLDER, exist_ok=True)
+
+
+@app.get(
+    "/api/portfolio",
+    response_model=List[schemas.PortfolioListItem],
+    response_model_by_alias=True,
+)
+def list_portfolio(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
+    return crud.get_portfolio_projects(db, skip=skip, limit=limit)
+
+
+@app.get(
+    "/api/portfolio/{portfolio_project_id}",
+    response_model=schemas.PortfolioDetail,
+    response_model_by_alias=True,
+)
+def detail_portfolio(portfolio_project_id: str, db: Session = Depends(get_db)):
+    project = crud.get_portfolio_project(db, portfolio_project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Portfolio project not found")
+    return project
+
+
+@app.post(
+    "/api/portfolio",
+    response_model=schemas.PortfolioListItem,
+    response_model_by_alias=True,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_portfolio(data: schemas.PortfolioCreate, db: Session = Depends(get_db)):
+    return crud.create_portfolio_project(db, data)
+
+
+@app.put(
+    "/api/portfolio/{portfolio_project_id}",
+    response_model=schemas.PortfolioListItem,
+    response_model_by_alias=True,
+)
+def update_portfolio(
+    portfolio_project_id: str,
+    data: schemas.PortfolioUpdate,
+    db: Session = Depends(get_db),
+):
+    project = crud.update_portfolio_project(db, portfolio_project_id, data)
+    if not project:
+        raise HTTPException(status_code=404, detail="Portfolio project not found")
+    return project
+
+
+@app.delete("/api/portfolio/{portfolio_project_id}")
+def delete_portfolio(portfolio_project_id: str, db: Session = Depends(get_db)):
+    project = crud.delete_portfolio_project(db, portfolio_project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Portfolio project not found")
+    return {"message": "Portfolio project deleted successfully"}
+
+
+@app.post(
+    "/api/portfolio/{portfolio_project_id}/main-images",
+    response_model=schemas.PortfolioDetail,
+    response_model_by_alias=True,
+)
+def upload_main_images(
+    portfolio_project_id: str,
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db),
+):
+    folder = os.path.join(PORTFOLIO_UPLOAD_FOLDER, portfolio_project_id, "main")
+    os.makedirs(folder, exist_ok=True)
+
+    urls = []
+    for file in files:
+        file_path = os.path.join(folder, file.filename)
+        with open(file_path, "wb") as buf:
+            shutil.copyfileobj(file.file, buf)
+        urls.append(public_upload_url(file_path))
+
+    result = crud.add_main_frame_images(db, portfolio_project_id, urls)
+    if not result:
+        raise HTTPException(status_code=404, detail="Portfolio project not found")
+    return crud.get_portfolio_project(db, portfolio_project_id)
+
+
+@app.post(
+    "/api/portfolio/{portfolio_project_id}/progress-stage",
+    response_model=schemas.ProgressStageResponse,
+    response_model_by_alias=True,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_progress_stage(
+    portfolio_project_id: str,
+    data: schemas.ProgressStageCreate,
+    db: Session = Depends(get_db),
+):
+    stage = crud.create_progress_stage(db, portfolio_project_id, data)
+    if not stage:
+        raise HTTPException(status_code=404, detail="Portfolio project not found")
+    return stage
+
+
+@app.post(
+    "/api/portfolio/{portfolio_project_id}/progress-stage/{stage_id}/images",
+    response_model=schemas.ProgressStageResponse,
+    response_model_by_alias=True,
+)
+def upload_progress_images(
+    portfolio_project_id: str,
+    stage_id: int,
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db),
+):
+    project = (
+        db.query(models.PortfolioProject)
+        .filter(models.PortfolioProject.portfolio_project_id == portfolio_project_id)
+        .first()
+    )
+    if not project:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Portfolio project '{portfolio_project_id}' not found",
+        )
+
+    stage_check = (
+        db.query(models.ProgressStage)
+        .filter(
+            models.ProgressStage.id == stage_id,
+            models.ProgressStage.project_id == project.id,
+        )
+        .first()
+    )
+    if not stage_check:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Progress stage id={stage_id} does not belong to project '{portfolio_project_id}'. Use the 'id' field from the stage creation response.",
+        )
+
+    folder = os.path.join(
+        PORTFOLIO_UPLOAD_FOLDER, portfolio_project_id, "progress", str(stage_id)
+    )
+    os.makedirs(folder, exist_ok=True)
+
+    urls = []
+    for file in files:
+        file_path = os.path.join(folder, file.filename)
+        with open(file_path, "wb") as buf:
+            shutil.copyfileobj(file.file, buf)
+        urls.append(public_upload_url(file_path))
+
+    stage = crud.add_progress_images(db, stage_id, urls)
+    return stage

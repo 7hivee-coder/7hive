@@ -7,7 +7,7 @@ import { GalleryComponent } from '../gallery/gallery.component';
 import { ApiService } from '../services/api.service';
 
 @Component({
-  selector: 'app-portfolio-page',
+  selector: 'app-home-page',
   standalone: true,
   imports: [CommonModule, NavbarComponent, ContactComponent, GalleryComponent],
   template: `
@@ -47,7 +47,7 @@ import { ApiService } from '../services/api.service';
   `,
   styleUrls: ['../app.css']
 })
-export class PortfolioPageComponent implements OnInit, OnDestroy {
+export class HomePageComponent implements OnInit, OnDestroy {
   slides: string[] = [];
   currentIndex = 0;
   loading = false;
@@ -60,7 +60,6 @@ export class PortfolioPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
 
   ngOnInit(): void {
-    console.log('Portfolio ngOnInit - loading slides...');
     this.api.getProjectImages()
       .subscribe({
         next: (res) => {

@@ -142,3 +142,144 @@ def create_enquiry(db: Session, name: str, email: str, message: str):
 
 def get_enquiries(db: Session):
     return db.query(models.Enquiry).order_by(models.Enquiry.created_at.desc()).all()
+
+
+# -------------------------
+# PORTFOLIO
+# -------------------------
+
+from sqlalchemy.orm import selectinload
+from typing import List as TypingList
+import uuid as _uuid
+
+
+def create_portfolio_project(db: Session, data) -> models.PortfolioProject:
+    project = models.PortfolioProject(
+        portfolio_project_id=_uuid.uuid4().hex[:19],  # temp unique placeholder
+        project_title=data.project_title,
+        short_description=data.short_description,
+        full_description=data.full_description,
+        location=data.location,
+        area=data.area,
+        client_name=data.client_name,
+        year=data.year,
+    )
+    db.add(project)
+    db.flush()  # Gets the auto-increment integer id from PostgreSQL (never resets on DELETE)
+    project.portfolio_project_id = f"P{project.id:03d}"
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+def get_portfolio_projects(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.PortfolioProject).offset(skip).limit(limit).all()
+
+
+def get_portfolio_project(db: Session, portfolio_project_id: str):
+    return (
+        db.query(models.PortfolioProject)
+        .filter(models.PortfolioProject.portfolio_project_id == portfolio_project_id)
+        .options(
+            selectinload(models.PortfolioProject.main_frame_images),
+            selectinload(models.PortfolioProject.progress_stages).selectinload(
+                models.ProgressStage.progress_images
+            ),
+        )
+        .first()
+    )
+
+
+def update_portfolio_project(db: Session, portfolio_project_id: str, data):
+    project = (
+        db.query(models.PortfolioProject)
+        .filter(models.PortfolioProject.portfolio_project_id == portfolio_project_id)
+        .first()
+    )
+    if not project:
+        return None
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(project, field, value)
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+def delete_portfolio_project(db: Session, portfolio_project_id: str):
+    project = (
+        db.query(models.PortfolioProject)
+        .filter(models.PortfolioProject.portfolio_project_id == portfolio_project_id)
+        .first()
+    )
+    if not project:
+        return None
+    db.delete(project)
+    db.commit()
+    return project
+
+
+def add_main_frame_images(
+    db: Session, portfolio_project_id: str, image_urls: TypingList[str]
+):
+    project = (
+        db.query(models.PortfolioProject)
+        .filter(models.PortfolioProject.portfolio_project_id == portfolio_project_id)
+        .options(selectinload(models.PortfolioProject.main_frame_images))
+        .first()
+    )
+    if not project:
+        return None
+    existing_count = len(project.main_frame_images)
+    for i, url in enumerate(image_urls):
+        db.add(
+            models.MainFrameImage(
+                project_id=project.id,
+                image_url=url,
+                display_order=existing_count + i + 1,
+            )
+        )
+    if not project.cover_image and image_urls:
+        project.cover_image = image_urls[0]
+    db.commit()
+    return project
+
+
+def create_progress_stage(db: Session, portfolio_project_id: str, data):
+    project = (
+        db.query(models.PortfolioProject)
+        .filter(models.PortfolioProject.portfolio_project_id == portfolio_project_id)
+        .first()
+    )
+    if not project:
+        return None
+    stage = models.ProgressStage(
+        project_id=project.id,
+        progress_number=data.progress_number,
+        stage_title=data.stage_title,
+        description=data.description,
+    )
+    db.add(stage)
+    db.commit()
+    db.refresh(stage)
+    return get_progress_stage(db, stage.id)
+
+
+def get_progress_stage(db: Session, stage_id: int):
+    return (
+        db.query(models.ProgressStage)
+        .filter(models.ProgressStage.id == stage_id)
+        .options(selectinload(models.ProgressStage.progress_images))
+        .first()
+    )
+
+
+def add_progress_images(
+    db: Session, stage_id: int, image_urls: TypingList[str]
+):
+    stage = db.query(models.ProgressStage).filter(models.ProgressStage.id == stage_id).first()
+    if not stage:
+        return None
+    for url in image_urls:
+        db.add(models.ProgressImage(stage_id=stage_id, image_url=url))
+    db.commit()
+    return get_progress_stage(db, stage_id)
