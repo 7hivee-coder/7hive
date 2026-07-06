@@ -440,10 +440,37 @@ import { PortfolioDetail } from '../portfolio.model';
     .stage-img-wrap:hover .stage-img { transform: scale(1.04); }
 
     @media (max-width: 600px) {
-      .carousel { height: 280px; }
-      .project-title { font-size: 24px; }
-      .info-grid { grid-template-columns: repeat(2, 1fr); padding: 16px; }
-      .stage-images { grid-template-columns: repeat(2, 1fr); }
+      .carousel {
+        height: 240px;
+      }
+
+      .carousel-img {
+        object-fit: contain;
+        background: var(--bg-secondary);
+      }
+
+      .stage-images {
+        grid-template-columns: 1fr;
+      }
+
+      .stage-img-wrap {
+        height: auto;
+        aspect-ratio: 4 / 3;
+      }
+
+      .stage-img {
+        object-fit: contain;
+        background: var(--bg-secondary);
+      }
+
+      .project-title {
+        font-size: 24px;
+      }
+
+      .info-grid {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 16px;
+      }
     }
   `]
 })
