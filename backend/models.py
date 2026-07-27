@@ -63,6 +63,7 @@ class PortfolioProject(Base):
     client_name = Column(String(200), nullable=True)
     year = Column(Integer, nullable=True)
     cover_image = Column(String(1000), nullable=True)
+    category = Column(String(50), nullable=True)
 
     main_frame_images = relationship(
         "MainFrameImage",

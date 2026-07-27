@@ -1,7 +1,7 @@
 import os
 import shutil
 import secrets
-from typing import List
+from typing import List, Optional
 
 from fastapi import (
     FastAPI,
@@ -303,20 +303,30 @@ os.makedirs(PORTFOLIO_UPLOAD_FOLDER, exist_ok=True)
 
 
 @app.get(
-    "/api/portfolio",
+    "/portfolio/home-preview",
+    response_model=List[schemas.CategoryPreview],
+    response_model_by_alias=True,
+)
+def home_preview(db: Session = Depends(get_db)):
+    return crud.get_home_preview(db)
+
+
+@app.get(
+    "/portfolio",
     response_model=List[schemas.PortfolioListItem],
     response_model_by_alias=True,
 )
 def list_portfolio(
     skip: int = 0,
     limit: int = 100,
+    category: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
-    return crud.get_portfolio_projects(db, skip=skip, limit=limit)
+    return crud.get_portfolio_projects(db, skip=skip, limit=limit, category=category)
 
 
 @app.get(
-    "/api/portfolio/{portfolio_project_id}",
+    "/portfolio/{portfolio_project_id}",
     response_model=schemas.PortfolioDetail,
     response_model_by_alias=True,
 )
@@ -328,7 +338,7 @@ def detail_portfolio(portfolio_project_id: str, db: Session = Depends(get_db)):
 
 
 @app.post(
-    "/api/portfolio",
+    "/portfolio",
     response_model=schemas.PortfolioListItem,
     response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
@@ -338,7 +348,7 @@ def create_portfolio(data: schemas.PortfolioCreate, db: Session = Depends(get_db
 
 
 @app.put(
-    "/api/portfolio/{portfolio_project_id}",
+    "/portfolio/{portfolio_project_id}",
     response_model=schemas.PortfolioListItem,
     response_model_by_alias=True,
 )
@@ -353,7 +363,7 @@ def update_portfolio(
     return project
 
 
-@app.delete("/api/portfolio/{portfolio_project_id}")
+@app.delete("/portfolio/{portfolio_project_id}")
 def delete_portfolio(portfolio_project_id: str, db: Session = Depends(get_db)):
     project = crud.delete_portfolio_project(db, portfolio_project_id)
     if not project:
@@ -362,7 +372,7 @@ def delete_portfolio(portfolio_project_id: str, db: Session = Depends(get_db)):
 
 
 @app.post(
-    "/api/portfolio/{portfolio_project_id}/main-images",
+    "/portfolio/{portfolio_project_id}/main-images",
     response_model=schemas.PortfolioDetail,
     response_model_by_alias=True,
 )
@@ -388,7 +398,7 @@ def upload_main_images(
 
 
 @app.post(
-    "/api/portfolio/{portfolio_project_id}/progress-stage",
+    "/portfolio/{portfolio_project_id}/progress-stage",
     response_model=schemas.ProgressStageResponse,
     response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
@@ -405,7 +415,7 @@ def add_progress_stage(
 
 
 @app.post(
-    "/api/portfolio/{portfolio_project_id}/progress-stage/{stage_id}/images",
+    "/portfolio/{portfolio_project_id}/progress-stage/{stage_id}/images",
     response_model=schemas.ProgressStageResponse,
     response_model_by_alias=True,
 )

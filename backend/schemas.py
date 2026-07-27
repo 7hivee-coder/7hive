@@ -1,7 +1,9 @@
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator, field_validator
 from pydantic.alias_generators import to_camel
 from typing import Optional, List
 from datetime import datetime
+
+_VALID_CATEGORIES = {'architecture', 'interior', 'turnkey', 'visualization'}
 
 class ImageResponse(BaseModel):
     id: int
@@ -121,6 +123,7 @@ class PortfolioListItem(BaseModel):
     cover_image: Optional[str] = None
     location: Optional[str] = None
     year: Optional[int] = None
+    category: Optional[str] = None
 
 
 class PortfolioDetail(BaseModel):
@@ -135,6 +138,7 @@ class PortfolioDetail(BaseModel):
     client_name: Optional[str] = None
     year: Optional[int] = None
     cover_image: Optional[str] = None
+    category: Optional[str] = None
     main_frame_images: List[MainFrameImageResponse] = []
     progress_stages: List[ProgressStageResponse] = []
 
@@ -149,6 +153,14 @@ class PortfolioCreate(BaseModel):
     area: Optional[str] = None
     client_name: Optional[str] = None
     year: Optional[int] = None
+    category: Optional[str] = None
+
+    @field_validator('category')
+    @classmethod
+    def validate_category(cls, v):
+        if v is not None and v not in _VALID_CATEGORIES:
+            raise ValueError(f'category must be one of: {sorted(_VALID_CATEGORIES)}')
+        return v
 
 
 class PortfolioUpdate(BaseModel):
@@ -161,6 +173,14 @@ class PortfolioUpdate(BaseModel):
     area: Optional[str] = None
     client_name: Optional[str] = None
     year: Optional[int] = None
+    category: Optional[str] = None
+
+    @field_validator('category')
+    @classmethod
+    def validate_category(cls, v):
+        if v is not None and v not in _VALID_CATEGORIES:
+            raise ValueError(f'category must be one of: {sorted(_VALID_CATEGORIES)}')
+        return v
 
 
 class ProgressStageCreate(BaseModel):
@@ -169,3 +189,25 @@ class ProgressStageCreate(BaseModel):
     progress_number: int
     stage_title: str
     description: Optional[str] = None
+
+
+class CategoryProjectItem(BaseModel):
+    model_config = _PORTFOLIO_CONFIG
+
+    portfolio_project_id: str
+    project_title: str
+    short_description: str
+    cover_image: Optional[str] = None
+    location: Optional[str] = None
+    year: Optional[int] = None
+    category: Optional[str] = None
+
+
+class CategoryPreview(BaseModel):
+    model_config = _PORTFOLIO_CONFIG
+
+    slug: str
+    title: str
+    project_count: int
+    preview_images: List[str] = []
+    projects: List[CategoryProjectItem] = []

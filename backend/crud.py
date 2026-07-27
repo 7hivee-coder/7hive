@@ -149,8 +149,15 @@ def get_enquiries(db: Session):
 # -------------------------
 
 from sqlalchemy.orm import selectinload
-from typing import List as TypingList
+from typing import List as TypingList, Optional as TypingOptional
 import uuid as _uuid
+
+_CATEGORY_TITLES = {
+    'architecture': 'Architecture',
+    'interior': 'Interior',
+    'turnkey': 'Turnkey',
+    'visualization': 'Visualization',
+}
 
 
 def create_portfolio_project(db: Session, data) -> models.PortfolioProject:
@@ -163,6 +170,7 @@ def create_portfolio_project(db: Session, data) -> models.PortfolioProject:
         area=data.area,
         client_name=data.client_name,
         year=data.year,
+        category=data.category,
     )
     db.add(project)
     db.flush()  # Gets the auto-increment integer id from PostgreSQL (never resets on DELETE)
@@ -172,8 +180,11 @@ def create_portfolio_project(db: Session, data) -> models.PortfolioProject:
     return project
 
 
-def get_portfolio_projects(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.PortfolioProject).offset(skip).limit(limit).all()
+def get_portfolio_projects(db: Session, skip: int = 0, limit: int = 100, category: TypingOptional[str] = None):
+    query = db.query(models.PortfolioProject)
+    if category:
+        query = query.filter(models.PortfolioProject.category == category)
+    return query.offset(skip).limit(limit).all()
 
 
 def get_portfolio_project(db: Session, portfolio_project_id: str):
@@ -216,6 +227,33 @@ def delete_portfolio_project(db: Session, portfolio_project_id: str):
     db.delete(project)
     db.commit()
     return project
+
+
+def get_home_preview(db: Session):
+    result = []
+    for slug, title in _CATEGORY_TITLES.items():
+        projects = (
+            db.query(models.PortfolioProject)
+            .filter(models.PortfolioProject.category == slug)
+            .options(selectinload(models.PortfolioProject.main_frame_images))
+            .all()
+        )
+        preview_images: TypingList[str] = []
+        for p in projects:
+            for img in p.main_frame_images:
+                preview_images.append(img.image_url)
+                if len(preview_images) >= 6:
+                    break
+            if len(preview_images) >= 6:
+                break
+        result.append({
+            'slug': slug,
+            'title': title,
+            'project_count': len(projects),
+            'preview_images': preview_images,
+            'projects': projects,
+        })
+    return result
 
 
 def add_main_frame_images(

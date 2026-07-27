@@ -133,4 +133,38 @@ export class ApiService {
     });
     return this.http.get<Enquiry[]>(`${this.baseUrl}/enquiries`, { headers });
   }
+
+  // =========================
+  // PORTFOLIO PROJECTS (admin)
+  // =========================
+  getPortfolioProjects(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/portfolio`);
+  }
+
+  createPortfolioProject(data: {
+    projectTitle: string;
+    shortDescription: string;
+    fullDescription?: string;
+    location?: string;
+    area?: string;
+    clientName?: string;
+    year?: number;
+    category?: string;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/portfolio`, data);
+  }
+
+  updatePortfolioProject(portfolioProjectId: string, data: { category?: string }): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/portfolio/${portfolioProjectId}`, data);
+  }
+
+  deletePortfolioProject(portfolioProjectId: string): Observable<ApiResponse> {
+    return this.http.delete<ApiResponse>(`${this.baseUrl}/portfolio/${portfolioProjectId}`);
+  }
+
+  uploadPortfolioMainImages(portfolioProjectId: string, files: File[]): Observable<any> {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    return this.http.post<any>(`${this.baseUrl}/portfolio/${portfolioProjectId}/main-images`, formData);
+  }
 }
