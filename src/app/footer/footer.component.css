@@ -40,6 +40,7 @@
 .tagline {
   font-size: 10px;
   color: var(--text-secondary);
+  margin-top: 10px;
 }
 
 .col h3 {

@@ -5,7 +5,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { ContactComponent } from '../contact/contact.component';
 import { PortfolioService } from '../portfolio/portfolio.service';
 import { CategoryPreview, CategoryProjectItem } from '../portfolio/portfolio.model';
-import { ApiService } from '../services/api.service';
+import { ApiService, OurLeader } from '../services/api.service';
 
 @Component({
   selector: 'app-home-page',
@@ -40,6 +40,19 @@ import { ApiService } from '../services/api.service';
     <!-- ===== SCROLLABLE CONTENT ===== -->
     <div class="main-content">
       <app-navbar></app-navbar>
+
+      <!-- ===== OUR LEADER ===== -->
+      <section class="leader-section" *ngIf="leader">
+        <div class="leader-card">
+          <div class="leader-img-wrap">
+            <img [src]="leader.filepath" [alt]="leader.title" class="leader-img" />
+          </div>
+          <div class="leader-content">
+            <h2 class="leader-title">{{ leader.title }}</h2>
+            <p class="leader-desc">{{ leader.description }}</p>
+          </div>
+        </div>
+      </section>
 
       <!-- ===== CATEGORY CARDS ===== -->
       <section class="categories-section">
@@ -159,6 +172,81 @@ import { ApiService } from '../services/api.service';
     </div>
   `,
   styles: [`
+    /* ===== OUR LEADER SECTION ===== */
+    .leader-section {
+      padding: 56px 32px 0;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .leader-card {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 40px;
+      align-items: center;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+    }
+
+    @media (max-width: 800px) {
+      .leader-card {
+        grid-template-columns: 120px 1fr;
+        gap: 16px;
+        padding: 16px;
+      }
+
+      .leader-title {
+        font-size: 18px;
+      }
+
+      .leader-desc {
+        font-size: 13px;
+      }
+    }
+
+    .leader-img-wrap {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      border-radius: 14px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .leader-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .leader-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 0 0 14px;
+    }
+
+    .leader-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 20px;
+      line-height: 1.25;
+      letter-spacing: 0.5px;
+    }
+
+    .leader-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      margin: 0;
+    }
+
     /* ===== CATEGORY CARDS SECTION ===== */
     .categories-section {
       padding: 56px 32px 64px;
@@ -536,6 +624,9 @@ export class HomePageComponent implements OnInit, OnDestroy {
   heroLoading = true;
   private carouselTimer?: ReturnType<typeof setInterval>;
 
+  /* ---- leader ---- */
+  leader: OurLeader | null = null;
+
   /* ---- category cards ---- */
   categories: CategoryPreview[] = [];
   isLoading = true;
@@ -567,6 +658,12 @@ export class HomePageComponent implements OnInit, OnDestroy {
         this.heroLoading = false;
         this.cdr.detectChanges();
       }
+    });
+
+    /* Our leader */
+    this.api.getOurLeader().subscribe({
+      next: (data) => { this.leader = data; this.cdr.detectChanges(); },
+      error: () => { /* no leader set yet — silently skip */ }
     });
 
     /* Category cards */

@@ -156,7 +156,7 @@ _CATEGORY_TITLES = {
     'architecture': 'Architecture',
     'interior': 'Interior',
     'turnkey': 'Turnkey',
-    'visualization': 'Visualization',
+    'siteexecution': 'Site Execution',
 }
 
 

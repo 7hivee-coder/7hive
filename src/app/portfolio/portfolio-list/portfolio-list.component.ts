@@ -17,7 +17,7 @@ const CATEGORY_SUBTITLES: Record<string, string> = {
   architecture: 'Thoughtful design from concept to structure',
   interior: 'Spaces crafted for living and experience',
   turnkey: 'Complete project delivery, end-to-end',
-  visualization: 'Photorealistic renders and 3D walkthroughs',
+  siteexecution: 'On-site construction and project execution',
 };
 
 @Component({

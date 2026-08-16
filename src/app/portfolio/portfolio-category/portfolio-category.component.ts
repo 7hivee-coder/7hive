@@ -16,14 +16,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   architecture: 'Architecture',
   interior: 'Interior',
   turnkey: 'Turnkey',
-  visualization: 'Visualization',
+  siteexecution: 'Site Execution',
 };
 
 const CATEGORY_SUBTITLES: Record<string, string> = {
   architecture: 'Thoughtful design from concept to structure',
   interior: 'Spaces crafted for living and experience',
   turnkey: 'Complete project delivery, end-to-end',
-  visualization: 'Photorealistic renders and 3D walkthroughs',
+  siteexecution: 'On-site construction and project execution',
 };
 
 interface ProjectCard extends PortfolioListItem {

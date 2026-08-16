@@ -1,4 +1,4 @@
-export type PortfolioCategory = 'architecture' | 'interior' | 'turnkey' | 'visualization';
+export type PortfolioCategory = 'architecture' | 'interior' | 'turnkey' | 'siteexecution';
 
 export interface PortfolioListItem {
   portfolioProjectId: string;

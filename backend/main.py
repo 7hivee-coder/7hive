@@ -295,6 +295,67 @@ def get_enquiries(
 
 
 # -------------------------------------------------------
+# OUR LEADER
+# -------------------------------------------------------
+
+OUR_LEADER_FOLDER = "uploads/ourleader"
+os.makedirs(OUR_LEADER_FOLDER, exist_ok=True)
+
+
+@app.get("/ourleader", response_model=schemas.OurLeaderResponse)
+def get_our_leader(db: Session = Depends(get_db)):
+    leader = db.query(models.OurLeader).first()
+    if not leader:
+        raise HTTPException(status_code=404, detail="No leader entry found")
+    leader.filepath = public_upload_url(leader.filepath)
+    return leader
+
+
+@app.post("/ourleader", response_model=schemas.OurLeaderResponse, status_code=status.HTTP_201_CREATED)
+def create_or_replace_our_leader(
+    title: str = Form(...),
+    description: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    existing = db.query(models.OurLeader).first()
+    if existing:
+        old_path = existing.filepath
+        if os.path.exists(old_path):
+            os.remove(old_path)
+        db.delete(existing)
+        db.commit()
+
+    file_path = os.path.join(OUR_LEADER_FOLDER, file.filename)
+    with open(file_path, "wb") as buf:
+        shutil.copyfileobj(file.file, buf)
+
+    leader = models.OurLeader(
+        title=title,
+        description=description,
+        filename=file.filename,
+        filepath=file_path,
+    )
+    db.add(leader)
+    db.commit()
+    db.refresh(leader)
+    leader.filepath = public_upload_url(leader.filepath)
+    return leader
+
+
+@app.delete("/ourleader")
+def delete_our_leader(db: Session = Depends(get_db)):
+    leader = db.query(models.OurLeader).first()
+    if not leader:
+        raise HTTPException(status_code=404, detail="No leader entry found")
+    if os.path.exists(leader.filepath):
+        os.remove(leader.filepath)
+    db.delete(leader)
+    db.commit()
+    return {"message": "Leader entry deleted"}
+
+
+# -------------------------------------------------------
 # PORTFOLIO
 # -------------------------------------------------------
 

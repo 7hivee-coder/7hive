@@ -46,6 +46,16 @@ class Enquiry(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class OurLeader(Base):
+    __tablename__ = "our_leader"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(500), nullable=False)
+    description = Column(Text, nullable=False)
+    filename = Column(String(500), nullable=False)
+    filepath = Column(String(1000), nullable=False)
+
+
 # -------------------------------------------------------
 # PORTFOLIO
 # -------------------------------------------------------

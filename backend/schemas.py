@@ -3,7 +3,7 @@ from pydantic.alias_generators import to_camel
 from typing import Optional, List
 from datetime import datetime
 
-_VALID_CATEGORIES = {'architecture', 'interior', 'turnkey', 'visualization'}
+_VALID_CATEGORIES = {'architecture', 'interior', 'turnkey', 'siteexecution'}
 
 class ImageResponse(BaseModel):
     id: int
@@ -70,6 +70,16 @@ class EnquiryResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+class OurLeaderResponse(BaseModel):
+    id: int
+    title: str
+    description: str
+    filename: str
+    filepath: str
+
+    model_config = {"from_attributes": True}
 
 
 # -------------------------------------------------------
