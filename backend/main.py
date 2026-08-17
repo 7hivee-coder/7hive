@@ -31,10 +31,19 @@ def public_upload_url(path: str) -> str:
     return "/" + path.lstrip("/")
 
 # Disable default docs
+_TAGS = [
+    {"name": "Home Images", "description": "Upload and manage homepage background/project images"},
+    {"name": "Team", "description": "Team intro text, team images, and team member cards"},
+    {"name": "Our Leader", "description": "Single leader showcase (image + title + description)"},
+    {"name": "Portfolio", "description": "Portfolio projects, main images, and progress stages"},
+    {"name": "Messages", "description": "Contact form enquiries"},
+]
+
 app = FastAPI(
-    title="7HIVE Image Upload API",
+    title="7HIVE API",
     docs_url=None,
-    redoc_url=None
+    redoc_url=None,
+    openapi_tags=_TAGS,
 )
 
 # -------------------------------
@@ -106,7 +115,7 @@ def custom_swagger_ui(username: str = Depends(authenticate)):
 # -------------------------------
 # Upload Images (Public)
 # -------------------------------
-@app.post("/upload-images/", response_model=List[schemas.ImageResponse])
+@app.post("/upload-images/", response_model=List[schemas.ImageResponse], tags=["Home Images"])
 def upload_images(
     files: List[UploadFile] = File(...),
     db: Session = Depends(get_db),
@@ -127,7 +136,7 @@ def upload_images(
 # -------------------------------
 # Get All Images (Public)
 # -------------------------------
-@app.get("/images/", response_model=List[schemas.ImageResponse])
+@app.get("/images/", response_model=List[schemas.ImageResponse], tags=["Home Images"])
 def list_images(
     db: Session = Depends(get_db),
 ):
@@ -143,7 +152,7 @@ TEAM_UPLOAD_FOLDER = "uploads/teamimages"
 os.makedirs(TEAM_UPLOAD_FOLDER, exist_ok=True)
 
 
-@app.post("/teamintro", response_model=schemas.TeamIntroResponse)
+@app.post("/teamintro", response_model=schemas.TeamIntroResponse, tags=["Team"])
 def create_team_intro(
     intro: schemas.TeamIntroCreate,
     db: Session = Depends(get_db),
@@ -151,12 +160,12 @@ def create_team_intro(
     return crud.create_team_intro(db, intro)
 
 
-@app.get("/teamintro", response_model=List[schemas.TeamIntroResponse])
+@app.get("/teamintro", response_model=List[schemas.TeamIntroResponse], tags=["Team"])
 def get_team_intro(db: Session = Depends(get_db)):
     return crud.get_team_intro(db)
 
 
-@app.post("/teamimages", response_model=List[schemas.TeamImageResponse])
+@app.post("/teamimages", response_model=List[schemas.TeamImageResponse], tags=["Team"])
 def upload_team_images(
     files: List[UploadFile] = File(...),
     db: Session = Depends(get_db),
@@ -180,7 +189,7 @@ def upload_team_images(
     return saved_images
 
 
-@app.get("/teamimages", response_model=List[schemas.TeamImageResponse])
+@app.get("/teamimages", response_model=List[schemas.TeamImageResponse], tags=["Team"])
 def get_team_images(
     db: Session = Depends(get_db),
 ):
@@ -192,7 +201,7 @@ def get_team_images(
     return images
 
 
-@app.delete("/images/{image_id}")
+@app.delete("/images/{image_id}", tags=["Home Images"])
 def delete_project_image(
     image_id: int,
     db: Session = Depends(get_db),
@@ -205,7 +214,7 @@ def delete_project_image(
     return {"message": "Project image deleted successfully"}
 
 
-@app.delete("/teamimages/{image_id}")
+@app.delete("/teamimages/{image_id}", tags=["Team"])
 def delete_team_image(
     image_id: int,
     db: Session = Depends(get_db),
@@ -225,7 +234,7 @@ TEAM_MEMBER_FOLDER = "uploads/teammembers"
 os.makedirs(TEAM_MEMBER_FOLDER, exist_ok=True)
 
 
-@app.post("/team-members", response_model=schemas.TeamMemberResponse)
+@app.post("/team-members", response_model=schemas.TeamMemberResponse, tags=["Team"])
 def create_team_member(
     title: str = Form(...),
     description: str = Form(...),
@@ -244,7 +253,7 @@ def create_team_member(
     )
 
 
-@app.get("/team-members", response_model=List[schemas.TeamMemberResponse])
+@app.get("/team-members", response_model=List[schemas.TeamMemberResponse], tags=["Team"])
 def get_team_members(
     db: Session = Depends(get_db),
 ):
@@ -254,7 +263,7 @@ def get_team_members(
     return members
 
 
-@app.delete("/team-members/{member_id}")
+@app.delete("/team-members/{member_id}", tags=["Team"])
 def delete_team_member(
     member_id: int,
     db: Session = Depends(get_db),
@@ -269,7 +278,7 @@ def delete_team_member(
 # Enquiries
 # -------------------------------
 
-@app.post("/enquiries", response_model=schemas.EnquiryResponse)
+@app.post("/enquiries", response_model=schemas.EnquiryResponse, tags=["Messages"])
 def create_enquiry(
     enquiry: schemas.EnquiryCreate,
     db: Session = Depends(get_db),
@@ -286,7 +295,7 @@ def create_enquiry(
     return crud.create_enquiry(db, name=name, email=email, message=message)
 
 
-@app.get("/enquiries", response_model=List[schemas.EnquiryResponse])
+@app.get("/enquiries", response_model=List[schemas.EnquiryResponse], tags=["Messages"])
 def get_enquiries(
     username: str = Depends(authenticate),
     db: Session = Depends(get_db),
@@ -302,7 +311,7 @@ OUR_LEADER_FOLDER = "uploads/ourleader"
 os.makedirs(OUR_LEADER_FOLDER, exist_ok=True)
 
 
-@app.get("/ourleader", response_model=schemas.OurLeaderResponse)
+@app.get("/ourleader", response_model=schemas.OurLeaderResponse, tags=["Our Leader"])
 def get_our_leader(db: Session = Depends(get_db)):
     leader = db.query(models.OurLeader).first()
     if not leader:
@@ -311,7 +320,7 @@ def get_our_leader(db: Session = Depends(get_db)):
     return leader
 
 
-@app.post("/ourleader", response_model=schemas.OurLeaderResponse, status_code=status.HTTP_201_CREATED)
+@app.post("/ourleader", response_model=schemas.OurLeaderResponse, status_code=status.HTTP_201_CREATED, tags=["Our Leader"])
 def create_or_replace_our_leader(
     title: str = Form(...),
     description: str = Form(...),
@@ -343,7 +352,7 @@ def create_or_replace_our_leader(
     return leader
 
 
-@app.delete("/ourleader")
+@app.delete("/ourleader", tags=["Our Leader"])
 def delete_our_leader(db: Session = Depends(get_db)):
     leader = db.query(models.OurLeader).first()
     if not leader:
@@ -367,6 +376,7 @@ os.makedirs(PORTFOLIO_UPLOAD_FOLDER, exist_ok=True)
     "/portfolio/home-preview",
     response_model=List[schemas.CategoryPreview],
     response_model_by_alias=True,
+    tags=["Portfolio"],
 )
 def home_preview(db: Session = Depends(get_db)):
     return crud.get_home_preview(db)
@@ -376,6 +386,7 @@ def home_preview(db: Session = Depends(get_db)):
     "/portfolio",
     response_model=List[schemas.PortfolioListItem],
     response_model_by_alias=True,
+    tags=["Portfolio"],
 )
 def list_portfolio(
     skip: int = 0,
@@ -390,6 +401,7 @@ def list_portfolio(
     "/portfolio/{portfolio_project_id}",
     response_model=schemas.PortfolioDetail,
     response_model_by_alias=True,
+    tags=["Portfolio"],
 )
 def detail_portfolio(portfolio_project_id: str, db: Session = Depends(get_db)):
     project = crud.get_portfolio_project(db, portfolio_project_id)
@@ -403,6 +415,7 @@ def detail_portfolio(portfolio_project_id: str, db: Session = Depends(get_db)):
     response_model=schemas.PortfolioListItem,
     response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
+    tags=["Portfolio"],
 )
 def create_portfolio(data: schemas.PortfolioCreate, db: Session = Depends(get_db)):
     return crud.create_portfolio_project(db, data)
@@ -412,6 +425,7 @@ def create_portfolio(data: schemas.PortfolioCreate, db: Session = Depends(get_db
     "/portfolio/{portfolio_project_id}",
     response_model=schemas.PortfolioListItem,
     response_model_by_alias=True,
+    tags=["Portfolio"],
 )
 def update_portfolio(
     portfolio_project_id: str,
@@ -424,7 +438,7 @@ def update_portfolio(
     return project
 
 
-@app.delete("/portfolio/{portfolio_project_id}")
+@app.delete("/portfolio/{portfolio_project_id}", tags=["Portfolio"])
 def delete_portfolio(portfolio_project_id: str, db: Session = Depends(get_db)):
     project = crud.delete_portfolio_project(db, portfolio_project_id)
     if not project:
@@ -436,6 +450,7 @@ def delete_portfolio(portfolio_project_id: str, db: Session = Depends(get_db)):
     "/portfolio/{portfolio_project_id}/main-images",
     response_model=schemas.PortfolioDetail,
     response_model_by_alias=True,
+    tags=["Portfolio"],
 )
 def upload_main_images(
     portfolio_project_id: str,
@@ -463,6 +478,7 @@ def upload_main_images(
     response_model=schemas.ProgressStageResponse,
     response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
+    tags=["Portfolio"],
 )
 def add_progress_stage(
     portfolio_project_id: str,
@@ -479,6 +495,7 @@ def add_progress_stage(
     "/portfolio/{portfolio_project_id}/progress-stage/{stage_id}/images",
     response_model=schemas.ProgressStageResponse,
     response_model_by_alias=True,
+    tags=["Portfolio"],
 )
 def upload_progress_images(
     portfolio_project_id: str,
