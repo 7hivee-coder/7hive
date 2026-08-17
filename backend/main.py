@@ -86,7 +86,7 @@ security = HTTPBasic()
 def authenticate(credentials: HTTPBasicCredentials = Security(security)):
     correct_username = secrets.compare_digest(
         credentials.username,
-        "7hivedesignstudio@gmail.com"
+        "7hivee@gmail.com"
     )
     correct_password = secrets.compare_digest(
         credentials.password,

@@ -5,7 +5,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Enquiry } from '../services/api.service';
 
-const ADMIN_EMAIL    = '7hivedesignstudio@gmail.com';
+const ADMIN_EMAIL    = '7hivee@gmail.com';
 const ADMIN_PASSWORD = '7hivedesignstudio';
 const SESSION_KEY    = '7hive_admin_auth';
 

@@ -137,7 +137,7 @@ export class ApiService {
 
   getEnquiries(): Observable<Enquiry[]> {
     const headers = new HttpHeaders({
-      Authorization: 'Basic ' + btoa('7hivedesignstudio@gmail.com:7hivedesignstudio')
+      Authorization: 'Basic ' + btoa('7hivee@gmail.com:7hivedesignstudio')
     });
     return this.http.get<Enquiry[]>(`${this.baseUrl}/enquiries`, { headers });
   }
