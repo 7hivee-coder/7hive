@@ -46,6 +46,16 @@ class Enquiry(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class OurLeader(Base):
+    __tablename__ = "our_leader"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(500), nullable=False)
+    description = Column(Text, nullable=False)
+    filename = Column(String(500), nullable=False)
+    filepath = Column(String(1000), nullable=False)
+
+
 # -------------------------------------------------------
 # PORTFOLIO
 # -------------------------------------------------------
@@ -63,6 +73,7 @@ class PortfolioProject(Base):
     client_name = Column(String(200), nullable=True)
     year = Column(Integer, nullable=True)
     cover_image = Column(String(1000), nullable=True)
+    category = Column(String(50), nullable=True)
 
     main_frame_images = relationship(
         "MainFrameImage",

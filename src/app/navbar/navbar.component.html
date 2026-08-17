@@ -1,13 +1,13 @@
 <header class="navbar">
   <div class="nav-inner">
     <div class="brand">
-      <img *ngIf="!isDarkTheme" src="assets/logo/7hiveblackmini.png" alt="7HIVE" class="brand-logo" />
-      <img *ngIf="isDarkTheme" src="assets/logo/7hivewhitemini.png" alt="7HIVE" class="brand-logo" />
-      <span class="brand-name">7HIVE</span>
+      <img *ngIf="!isDarkTheme" src="assets/logo/7hiveblack.png" alt="7HIVE" class="brand-logo" />
+      <img *ngIf="isDarkTheme" src="assets/logo/7hivewhite.png" alt="7HIVE" class="brand-logo" />
+      <!-- <span class="brand-name">7HIVE</span> -->
     </div>
     <nav class="nav-links">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
-      <a routerLink="/portfolio" routerLinkActive="active">Portfolio</a>
+      <a routerLink="/portfolio" routerLinkActive="active">Projects</a>
       <a routerLink="/team" routerLinkActive="active">Team</a>
       <a routerLink="/about" routerLinkActive="active">About Us</a>
     </nav>

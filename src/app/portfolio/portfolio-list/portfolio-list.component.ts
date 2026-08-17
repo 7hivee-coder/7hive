@@ -4,18 +4,21 @@ import {
   OnDestroy,
   inject,
   ChangeDetectorRef,
+  NgZone,
   PLATFORM_ID,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { NavbarComponent } from '../../navbar/navbar.component';
 import { PortfolioService } from '../portfolio.service';
-import { PortfolioListItem } from '../portfolio.model';
+import { CategoryPreview } from '../portfolio.model';
 
-interface PortfolioCard extends PortfolioListItem {
-  imageState: 'loading' | 'loaded' | 'error';
-  imageTimeout?: ReturnType<typeof setTimeout>;
-}
+const CATEGORY_SUBTITLES: Record<string, string> = {
+  architecture: 'Thoughtful design from concept to structure',
+  interior: 'Spaces crafted for living and experience',
+  turnkey: 'Complete project delivery, end-to-end',
+  siteexecution: 'On-site construction and project execution',
+};
 
 @Component({
   selector: 'app-portfolio-list',
@@ -29,96 +32,70 @@ interface PortfolioCard extends PortfolioListItem {
 
         <div class="page-header">
           <h1 class="page-title">Portfolio</h1>
-          <p class="page-subtitle">Our work — architecture, interior, landscape</p>
+          <p class="page-subtitle">Explore our work across four disciplines</p>
         </div>
 
         <!-- Loading Skeletons -->
-        <div *ngIf="isLoading" class="cards-grid">
-          <div *ngFor="let s of skeletons" class="card">
-            <div class="card-image-wrap">
-              <div class="skeleton skeleton-img"></div>
-            </div>
-            <div class="card-body">
-              <div class="skeleton skeleton-title-line"></div>
-              <div class="skeleton skeleton-text-line"></div>
-              <div class="skeleton skeleton-text-line short"></div>
-              <div class="skeleton skeleton-btn"></div>
+        <div *ngIf="isLoading" class="categories-grid">
+          <div *ngFor="let s of skeletons" class="cat-card skeleton-card">
+            <div class="skeleton skeleton-img-full"></div>
+            <div class="cat-info">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-sub"></div>
             </div>
           </div>
         </div>
 
-        <!-- Load Error -->
+        <!-- Error -->
         <div *ngIf="!isLoading && loadError" class="state-box">
           <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="8" x2="12" y2="12"></line>
             <line x1="12" y1="16" x2="12.01" y2="16"></line>
           </svg>
-          <h3>Something went wrong</h3>
-          <p>Could not load portfolio. Please try again later.</p>
+          <h3>Could not load portfolio</h3>
+          <p>Please try again later.</p>
         </div>
 
-        <!-- Empty State -->
-        <div *ngIf="!isLoading && !loadError && projects.length === 0" class="state-box">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-            <path d="M3 9h18"></path>
-            <path d="M9 21V9"></path>
-          </svg>
-          <h3>No Projects Yet</h3>
-          <p>Portfolio projects will appear here once added.</p>
-        </div>
+        <!-- Category Cards -->
+        <div *ngIf="!isLoading && !loadError" class="categories-grid">
+          <div
+            *ngFor="let cat of categories"
+            class="cat-card"
+            (click)="goToCategory(cat.slug)"
+            (mouseenter)="hoveredSlug = cat.slug"
+            (mouseleave)="hoveredSlug = null">
 
-        <!-- Cards Grid -->
-        <div *ngIf="!isLoading && !loadError && projects.length > 0" class="cards-grid">
-          <div *ngFor="let p of projects" class="card" (click)="goToDetail(p.portfolioProjectId)">
-
-            <div class="card-image-wrap">
-              <div class="skeleton skeleton-img" [class.hidden]="p.imageState !== 'loading'"></div>
-
-              <img
-                *ngIf="p.coverImage"
-                [src]="p.coverImage"
-                [alt]="p.projectTitle"
-                class="card-img"
-                [class.visible]="p.imageState === 'loaded'"
-                (load)="onImageLoad(p)"
-                (error)="onImageError(p)"
-              />
-
-              <div class="img-placeholder" *ngIf="!p.coverImage">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <div class="cat-image-wrap">
+              <ng-container *ngFor="let img of cat.previewImages; let i = index">
+                <img
+                  [src]="img"
+                  [alt]="cat.title"
+                  class="cat-img"
+                  [class.active]="i === (imgIndex[cat.slug] ?? 0)"
+                  loading="lazy"
+                />
+              </ng-container>
+              <div class="cat-placeholder" *ngIf="cat.previewImages.length === 0">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                   <rect x="3" y="3" width="18" height="18" rx="2"></rect>
                   <circle cx="8.5" cy="8.5" r="1.5"></circle>
                   <polyline points="21 15 16 10 5 21"></polyline>
                 </svg>
               </div>
-
-              <div class="img-error" [class.visible]="p.imageState === 'error'">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                  <line x1="9" y1="9" x2="15" y2="15"></line>
-                  <line x1="15" y1="9" x2="9" y2="15"></line>
-                </svg>
-                <span>Image unavailable</span>
-              </div>
-
-              <div class="card-meta-overlay" *ngIf="p.location || p.year">
-                <span *ngIf="p.location" class="meta-tag">{{ p.location }}</span>
-                <span *ngIf="p.year" class="meta-tag">{{ p.year }}</span>
-              </div>
-            </div>
-
-            <div class="card-body">
-              <h3 class="card-title">{{ p.projectTitle }}</h3>
-              <p class="card-desc">{{ p.shortDescription }}</p>
-              <button class="view-btn" (click)="goToDetail(p.portfolioProjectId); $event.stopPropagation()">
-                View Project
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <div class="cat-overlay" [class.visible]="hoveredSlug === cat.slug">
+                <span class="overlay-label">Explore Category</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
                 </svg>
-              </button>
+              </div>
+              <div class="project-count-badge">{{ cat.projectCount }} {{ cat.projectCount === 1 ? 'Project' : 'Projects' }}</div>
+            </div>
+
+            <div class="cat-info">
+              <h2 class="cat-title">{{ cat.title }}</h2>
+              <p class="cat-subtitle">{{ subtitles[cat.slug] }}</p>
             </div>
 
           </div>
@@ -142,7 +119,7 @@ interface PortfolioCard extends PortfolioListItem {
 
     .page-header {
       text-align: center;
-      margin-bottom: 48px;
+      margin-bottom: 52px;
     }
 
     .page-title {
@@ -160,94 +137,119 @@ interface PortfolioCard extends PortfolioListItem {
       margin: 0;
     }
 
-    /* ---- CARDS GRID ---- */
-    .cards-grid {
+    .categories-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 28px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
     }
 
-    @media (max-width: 900px) {
-      .cards-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (max-width: 560px) {
-      .cards-grid { grid-template-columns: 1fr; }
+    @media (max-width: 700px) {
+      .categories-grid { grid-template-columns: 1fr; }
       .page-title { font-size: 26px; }
     }
 
-    /* ---- CARD ---- */
-    .card {
+    .cat-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
       box-shadow: var(--card-shadow);
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
       cursor: pointer;
+      transition: transform 0.28s ease, box-shadow 0.28s ease;
     }
 
-    .card:hover {
-      transform: translateY(-5px);
+    .cat-card:hover {
+      transform: translateY(-6px);
       box-shadow: var(--card-shadow-hover);
     }
 
-    .card:hover .view-btn {
-      background: var(--text-primary);
-      color: var(--bg-primary);
-    }
-
-    /* ---- IMAGE AREA ---- */
-    .card-image-wrap {
+    .cat-image-wrap {
       position: relative;
       width: 100%;
-      height: 220px;
+      height: 280px;
       background: var(--bg-secondary);
       overflow: hidden;
     }
 
-    .card-img {
+    .cat-img {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
       opacity: 0;
-      transition: opacity 0.35s ease;
+      transition: opacity 0.9s ease;
     }
 
-    .card-img.visible { opacity: 1; }
+    .cat-img.active { opacity: 1; }
 
-    .img-placeholder {
+    .cat-placeholder {
       position: absolute;
       inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--text-muted);
-      opacity: 0.4;
+      opacity: 0.3;
     }
 
-    .card-meta-overlay {
+    .cat-overlay {
       position: absolute;
-      bottom: 10px;
-      left: 10px;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.52);
       display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      text-transform: uppercase;
     }
 
-    .meta-tag {
-      background: rgba(0,0,0,0.55);
+    .cat-overlay.visible { opacity: 1; }
+
+    .project-count-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0, 0, 0, 0.6);
       color: #fff;
       font-size: 11px;
-      font-weight: 600;
-      padding: 3px 8px;
+      font-weight: 700;
+      padding: 4px 10px;
       border-radius: 20px;
       letter-spacing: 0.5px;
     }
 
+    .cat-info {
+      padding: 20px 24px 24px;
+    }
+
+    .cat-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 6px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .cat-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin: 0;
+      line-height: 1.6;
+    }
+
     /* ---- SKELETON ---- */
+    .skeleton-card {
+      pointer-events: none;
+    }
+
     .skeleton {
       background: linear-gradient(
         90deg,
@@ -257,110 +259,27 @@ interface PortfolioCard extends PortfolioListItem {
       );
       background-size: 600px 100%;
       animation: shimmer 1.4s ease infinite;
+      border-radius: 4px;
     }
 
-    .skeleton-img {
-      position: absolute;
-      inset: 0;
+    .skeleton-img-full {
       width: 100%;
-      height: 100%;
-      transition: opacity 0.2s;
+      height: 280px;
+      border-radius: 0;
     }
 
-    .skeleton-img.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .skeleton-title-line {
-      height: 16px;
-      border-radius: 4px;
+    .skeleton-title {
+      height: 20px;
+      width: 50%;
       margin-bottom: 10px;
-      width: 60%;
     }
 
-    .skeleton-text-line {
-      height: 12px;
-      border-radius: 4px;
-      margin-bottom: 8px;
-      width: 92%;
+    .skeleton-sub {
+      height: 13px;
+      width: 80%;
     }
 
-    .skeleton-text-line.short { width: 70%; }
-
-    .skeleton-btn {
-      height: 36px;
-      border-radius: 8px;
-      margin-top: 14px;
-      width: 130px;
-    }
-
-    /* ---- IMAGE ERROR ---- */
-    .img-error {
-      position: absolute;
-      inset: 0;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: var(--error-bg);
-      color: var(--error-color);
-      text-align: center;
-      padding: 16px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-
-    .img-error.visible { display: flex; }
-
-    /* ---- CARD BODY ---- */
-    .card-body {
-      padding: 18px 20px 22px;
-    }
-
-    .card-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin: 0 0 8px;
-      line-height: 1.3;
-    }
-
-    .card-desc {
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin: 0 0 16px;
-      line-height: 1.65;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .view-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      font-size: 13px;
-      font-weight: 600;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-      letter-spacing: 0.3px;
-    }
-
-    .view-btn:hover {
-      background: var(--text-primary);
-      color: var(--bg-primary);
-      border-color: var(--text-primary);
-    }
-
-    /* ---- EMPTY / ERROR STATE ---- */
+    /* ---- STATE ---- */
     .state-box {
       display: flex;
       flex-direction: column;
@@ -392,21 +311,28 @@ export class PortfolioListComponent implements OnInit, OnDestroy {
   private portfolioService = inject(PortfolioService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  private zone = inject(NgZone);
   private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  projects: PortfolioCard[] = [];
+  categories: CategoryPreview[] = [];
   isLoading = true;
   loadError = false;
-  readonly skeletons = [1, 2, 3, 4, 5, 6];
+  hoveredSlug: string | null = null;
+  imgIndex: Record<string, number> = {};
+  readonly subtitles = CATEGORY_SUBTITLES;
+  readonly skeletons = [1, 2, 3, 4];
+
+  private timers: Record<string, ReturnType<typeof setInterval>> = {};
 
   ngOnInit(): void {
-    this.portfolioService.getPortfolioList().subscribe({
+    this.portfolioService.getHomePreview().subscribe({
       next: (data) => {
-        this.projects = data.map(p => ({ ...p, imageState: 'loading' as const }));
+        this.categories = data;
         this.isLoading = false;
+        data.forEach(cat => { this.imgIndex[cat.slug] = 0; });
         this.cdr.detectChanges();
         if (this.isBrowser) {
-          this.projects.forEach(p => this.startImageTimeout(p));
+          data.forEach(cat => this.startRotation(cat));
         }
       },
       error: () => {
@@ -417,34 +343,22 @@ export class PortfolioListComponent implements OnInit, OnDestroy {
     });
   }
 
-  goToDetail(portfolioProjectId: string): void {
-    this.router.navigate(['/portfolio', portfolioProjectId]);
+  goToCategory(slug: string): void {
+    this.router.navigate(['/portfolio/category', slug]);
   }
 
-  onImageLoad(project: PortfolioCard): void {
-    if (project.imageTimeout) clearTimeout(project.imageTimeout);
-    project.imageState = 'loaded';
-    this.cdr.detectChanges();
-  }
-
-  onImageError(project: PortfolioCard): void {
-    if (project.imageTimeout) clearTimeout(project.imageTimeout);
-    project.imageState = 'error';
-    this.cdr.detectChanges();
-  }
-
-  private startImageTimeout(project: PortfolioCard): void {
-    project.imageTimeout = setTimeout(() => {
-      if (project.imageState === 'loading') {
-        project.imageState = 'error';
+  private startRotation(cat: CategoryPreview): void {
+    if (cat.previewImages.length <= 1) return;
+    this.timers[cat.slug] = setInterval(() => {
+      this.zone.run(() => {
+        const n = cat.previewImages.length;
+        this.imgIndex[cat.slug] = ((this.imgIndex[cat.slug] ?? 0) + 1) % n;
         this.cdr.detectChanges();
-      }
-    }, 20000);
+      });
+    }, 3500);
   }
 
   ngOnDestroy(): void {
-    this.projects.forEach(p => {
-      if (p.imageTimeout) clearTimeout(p.imageTimeout);
-    });
+    Object.values(this.timers).forEach(t => clearInterval(t));
   }
 }

@@ -36,6 +36,14 @@ export interface TeamMember {
   filepath: string;
 }
 
+export interface OurLeader {
+  id: number;
+  title: string;
+  description: string;
+  filename: string;
+  filepath: string;
+}
+
 export interface Enquiry {
   id: number;
   name: string;
@@ -132,5 +140,58 @@ export class ApiService {
       Authorization: 'Basic ' + btoa('7hivedesignstudio@gmail.com:7hivedesignstudio')
     });
     return this.http.get<Enquiry[]>(`${this.baseUrl}/enquiries`, { headers });
+  }
+
+  // =========================
+  // OUR LEADER
+  // =========================
+  getOurLeader(): Observable<OurLeader> {
+    return this.http.get<OurLeader>(`${this.baseUrl}/ourleader`);
+  }
+
+  createOrReplaceOurLeader(title: string, description: string, file: File): Observable<OurLeader> {
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('file', file);
+    return this.http.post<OurLeader>(`${this.baseUrl}/ourleader`, formData);
+  }
+
+  deleteOurLeader(): Observable<ApiResponse> {
+    return this.http.delete<ApiResponse>(`${this.baseUrl}/ourleader`);
+  }
+
+  // =========================
+  // PORTFOLIO PROJECTS (admin)
+  // =========================
+  getPortfolioProjects(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/portfolio`);
+  }
+
+  createPortfolioProject(data: {
+    projectTitle: string;
+    shortDescription: string;
+    fullDescription?: string;
+    location?: string;
+    area?: string;
+    clientName?: string;
+    year?: number;
+    category?: string;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/portfolio`, data);
+  }
+
+  updatePortfolioProject(portfolioProjectId: string, data: { category?: string }): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/portfolio/${portfolioProjectId}`, data);
+  }
+
+  deletePortfolioProject(portfolioProjectId: string): Observable<ApiResponse> {
+    return this.http.delete<ApiResponse>(`${this.baseUrl}/portfolio/${portfolioProjectId}`);
+  }
+
+  uploadPortfolioMainImages(portfolioProjectId: string, files: File[]): Observable<any> {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    return this.http.post<any>(`${this.baseUrl}/portfolio/${portfolioProjectId}/main-images`, formData);
   }
 }

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, ProjectImage, TeamImage, TeamMember } from '../services/api.service';
+import { ApiService, ProjectImage, TeamImage, TeamMember, OurLeader } from '../services/api.service';
 
 @Component({
   selector: 'app-admin',
@@ -205,6 +205,172 @@ import { ApiService, ProjectImage, TeamImage, TeamMember } from '../services/api
         <p *ngIf="!teamIntroTitle || !teamIntroDescription" class="hint">
           Please fill in both title and description to save
         </p>
+      </section>
+
+      <!-- Our Leader Section -->
+      <section class="admin-section">
+        <h2>Our Leader</h2>
+
+        <!-- Current leader preview -->
+        <div *ngIf="currentLeader" class="leader-preview">
+          <div class="leader-preview-row">
+            <img [src]="currentLeader.filepath" [alt]="currentLeader.title" class="leader-thumb" />
+            <strong class="leader-preview-title">{{ currentLeader.title }}</strong>
+          </div>
+          <p class="leader-preview-desc">{{ currentLeader.description }}</p>
+        </div>
+        <p *ngIf="!currentLeader" class="hint">No leader set yet.</p>
+
+        <div class="leader-form" style="margin-top:20px">
+          <h3 style="margin:0 0 14px;font-size:15px;color:#555">{{ currentLeader ? 'Replace Leader' : 'Add Leader' }}</h3>
+          <div class="form-group">
+            <label>Name / Title *</label>
+            <input type="text" [(ngModel)]="leaderForm.title" class="form-control" placeholder="e.g. Ar. Rahul Sharma" />
+          </div>
+          <div class="form-group">
+            <label>Description / Bio *</label>
+            <textarea [(ngModel)]="leaderForm.description" class="form-control" rows="4" placeholder="Brief intro about the leader..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Photo *</label>
+            <input type="file" accept="image/*" (change)="onLeaderFileSelected($event)" class="form-control" />
+            <p *ngIf="leaderForm.file" class="hint">Selected: {{ leaderForm.file.name }}</p>
+          </div>
+          <button
+            type="button"
+            class="btn btn-success"
+            [disabled]="uploading || !leaderForm.title || !leaderForm.description || !leaderForm.file"
+            (click)="saveLeader()">
+            {{ uploading ? 'Saving...' : (currentLeader ? 'Replace Leader' : 'Save Leader') }}
+          </button>
+        </div>
+      </section>
+
+      <!-- Portfolio Projects Section -->
+      <section class="admin-section">
+        <h2>Portfolio Projects</h2>
+
+        <!-- Create Form -->
+        <div class="portfolio-form">
+          <h3 style="margin:0 0 16px;font-size:16px;color:#555">Create New Project</h3>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Project Title *</label>
+              <input type="text" [(ngModel)]="pf.title" class="form-control" placeholder="Project title" />
+            </div>
+            <div class="form-group">
+              <label>Category *</label>
+              <select [(ngModel)]="pf.category" class="form-control">
+                <option value="">-- Select Category --</option>
+                <option value="architecture">Architecture</option>
+                <option value="interior">Interior</option>
+                <option value="turnkey">Turnkey</option>
+                <option value="siteexecution">Site Execution</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Short Description *</label>
+            <input type="text" [(ngModel)]="pf.shortDescription" class="form-control" placeholder="One-line description" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Location</label>
+              <input type="text" [(ngModel)]="pf.location" class="form-control" placeholder="e.g. Bangalore" />
+            </div>
+            <div class="form-group">
+              <label>Year</label>
+              <input type="number" [(ngModel)]="pf.year" class="form-control" placeholder="e.g. 2025" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Area</label>
+              <input type="text" [(ngModel)]="pf.area" class="form-control" placeholder="e.g. 2400 sqft" />
+            </div>
+            <div class="form-group">
+              <label>Client Name</label>
+              <input type="text" [(ngModel)]="pf.clientName" class="form-control" placeholder="Client name" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Full Description</label>
+            <textarea [(ngModel)]="pf.fullDescription" class="form-control" rows="3" placeholder="Detailed description (optional)"></textarea>
+          </div>
+
+          <button
+            type="button"
+            (click)="createPortfolioProject()"
+            [disabled]="uploading || !pf.title || !pf.shortDescription || !pf.category"
+            class="btn btn-success">
+            {{ uploading ? 'Creating...' : 'Create Project' }}
+          </button>
+        </div>
+
+        <!-- Project List -->
+        <div *ngIf="portfolioProjects.length > 0" style="margin-top:32px">
+          <h3 style="margin:0 0 16px;font-size:16px;color:#555">Existing Projects</h3>
+          <div class="portfolio-project-list">
+            <div *ngFor="let p of portfolioProjects" class="portfolio-project-item">
+
+              <div class="ppi-meta">
+                <strong>{{ p.projectTitle }}</strong>
+                <span class="cat-badge">{{ p.category || 'no category' }}</span>
+                <span style="color:#999;font-size:12px">{{ p.portfolioProjectId }}</span>
+              </div>
+
+              <div class="ppi-actions">
+                <!-- Change Category -->
+                <select
+                  [value]="p.category || ''"
+                  (change)="updateProjectCategory(p.portfolioProjectId, $any($event.target).value)"
+                  class="form-control cat-select">
+                  <option value="">-- category --</option>
+                  <option value="architecture">Architecture</option>
+                  <option value="interior">Interior</option>
+                  <option value="turnkey">Turnkey</option>
+                  <option value="siteexecution">Site Execution</option>
+                </select>
+
+                <!-- Upload Main Images -->
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  [id]="'img-upload-' + p.portfolioProjectId"
+                  style="display:none"
+                  (change)="onPortfolioImagesSelected($event, p.portfolioProjectId)"
+                />
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  (click)="triggerPortfolioImgUpload(p.portfolioProjectId)">
+                  Upload Images
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  (click)="deletePortfolioProject(p.portfolioProjectId)">
+                  Delete
+                </button>
+              </div>
+
+              <!-- Cover image preview -->
+              <div *ngIf="p.coverImage" class="ppi-cover">
+                <img [src]="p.coverImage" [alt]="p.projectTitle" />
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <p *ngIf="portfolioProjects.length === 0" class="hint">No portfolio projects yet.</p>
+
       </section>
 
       <!-- Status Messages -->
@@ -436,6 +602,130 @@ import { ApiService, ProjectImage, TeamImage, TeamMember } from '../services/api
       background: #dc3545;
     }
 
+    .leader-preview {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .leader-preview-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .leader-thumb {
+      width: 40px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .leader-preview-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #222;
+    }
+
+    .leader-preview-desc {
+      font-size: 13px;
+      color: #666;
+      margin: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .leader-form {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .portfolio-form {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    .portfolio-project-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .portfolio-project-item {
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ppi-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .cat-badge {
+      background: #007bff;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      text-transform: capitalize;
+    }
+
+    .ppi-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .cat-select {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .ppi-cover {
+      width: 120px;
+      height: 80px;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .ppi-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
     @keyframes slideIn {
       from {
         transform: translateX(400px);
@@ -466,6 +756,21 @@ export class AdminComponent implements OnInit {
   teamIntroTitle = '';
   teamIntroDescription = '';
 
+  currentLeader: OurLeader | null = null;
+  leaderForm = { title: '', description: '', file: null as File | null };
+
+  portfolioProjects: any[] = [];
+  pf = {
+    title: '',
+    shortDescription: '',
+    fullDescription: '',
+    location: '',
+    area: '',
+    clientName: '',
+    year: null as number | null,
+    category: '',
+  };
+
   statusMessage = '';
   isError = false;
 
@@ -473,6 +778,8 @@ export class AdminComponent implements OnInit {
     this.loadProjectImages();
     this.loadTeamImages();
     this.loadTeamMembers();
+    this.loadPortfolioProjects();
+    this.loadLeader();
   }
 
   loadProjectImages() {
@@ -663,6 +970,133 @@ export class AdminComponent implements OnInit {
       error: (err) => {
         console.error('Delete failed:', err);
         this.showMessage('Failed to delete team member', true);
+      }
+    });
+  }
+
+  loadLeader() {
+    this.api.getOurLeader().subscribe({
+      next: (data) => { this.currentLeader = data; this.cdr.detectChanges(); },
+      error: () => { this.currentLeader = null; this.cdr.detectChanges(); }
+    });
+  }
+
+  onLeaderFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.leaderForm.file = input.files[0];
+    }
+  }
+
+  saveLeader() {
+    if (!this.leaderForm.title || !this.leaderForm.description || !this.leaderForm.file) return;
+    this.uploading = true;
+    this.api.createOrReplaceOurLeader(this.leaderForm.title, this.leaderForm.description, this.leaderForm.file).subscribe({
+      next: (data) => {
+        this.uploading = false;
+        this.currentLeader = data;
+        this.leaderForm = { title: '', description: '', file: null };
+        this.showMessage('Leader saved successfully');
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.uploading = false;
+        this.showMessage('Failed to save leader', true);
+      }
+    });
+  }
+
+  deleteLeader() {
+    if (!confirm('Remove this leader entry?')) return;
+    this.api.deleteOurLeader().subscribe({
+      next: () => {
+        this.currentLeader = null;
+        this.showMessage('Leader removed');
+        this.cdr.detectChanges();
+      },
+      error: () => this.showMessage('Failed to remove leader', true)
+    });
+  }
+
+  loadPortfolioProjects() {
+    this.api.getPortfolioProjects().subscribe({
+      next: (projects) => {
+        this.portfolioProjects = projects;
+        this.cdr.detectChanges();
+      },
+      error: () => this.showMessage('Failed to load portfolio projects', true)
+    });
+  }
+
+  createPortfolioProject() {
+    if (!this.pf.title || !this.pf.shortDescription || !this.pf.category) return;
+    this.uploading = true;
+    this.api.createPortfolioProject({
+      projectTitle: this.pf.title,
+      shortDescription: this.pf.shortDescription,
+      fullDescription: this.pf.fullDescription || undefined,
+      location: this.pf.location || undefined,
+      area: this.pf.area || undefined,
+      clientName: this.pf.clientName || undefined,
+      year: this.pf.year ?? undefined,
+      category: this.pf.category,
+    }).subscribe({
+      next: () => {
+        this.uploading = false;
+        this.pf = { title: '', shortDescription: '', fullDescription: '', location: '', area: '', clientName: '', year: null, category: '' };
+        this.showMessage('Portfolio project created');
+        this.loadPortfolioProjects();
+      },
+      error: () => {
+        this.uploading = false;
+        this.showMessage('Failed to create portfolio project', true);
+      }
+    });
+  }
+
+  updateProjectCategory(portfolioProjectId: string, category: string) {
+    if (!category) return;
+    this.api.updatePortfolioProject(portfolioProjectId, { category }).subscribe({
+      next: () => {
+        this.showMessage('Category updated');
+        this.loadPortfolioProjects();
+      },
+      error: () => this.showMessage('Failed to update category', true)
+    });
+  }
+
+  deletePortfolioProject(portfolioProjectId: string) {
+    if (!confirm('Delete this portfolio project and all its images?')) return;
+    this.api.deletePortfolioProject(portfolioProjectId).subscribe({
+      next: () => {
+        this.showMessage('Portfolio project deleted');
+        this.loadPortfolioProjects();
+      },
+      error: () => this.showMessage('Failed to delete portfolio project', true)
+    });
+  }
+
+  triggerPortfolioImgUpload(portfolioProjectId: string) {
+    const el = document.getElementById('img-upload-' + portfolioProjectId) as HTMLInputElement;
+    if (el) el.click();
+  }
+
+  onPortfolioImagesSelected(event: Event, portfolioProjectId: string) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const files = Array.from(input.files);
+    this.uploading = true;
+    this.api.uploadPortfolioMainImages(portfolioProjectId, files).subscribe({
+      next: () => {
+        this.uploading = false;
+        this.showMessage(`Uploaded ${files.length} image(s) for ${portfolioProjectId}`);
+        this.loadPortfolioProjects();
+        input.value = '';
+      },
+      error: () => {
+        this.uploading = false;
+        this.showMessage('Failed to upload images', true);
+        input.value = '';
       }
     });
   }

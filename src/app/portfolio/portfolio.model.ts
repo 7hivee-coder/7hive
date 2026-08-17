@@ -1,3 +1,5 @@
+export type PortfolioCategory = 'architecture' | 'interior' | 'turnkey' | 'siteexecution';
+
 export interface PortfolioListItem {
   portfolioProjectId: string;
   projectTitle: string;
@@ -5,6 +7,25 @@ export interface PortfolioListItem {
   coverImage?: string;
   location?: string;
   year?: number;
+  category?: PortfolioCategory;
+}
+
+export interface CategoryProjectItem {
+  portfolioProjectId: string;
+  projectTitle: string;
+  shortDescription: string;
+  coverImage?: string;
+  location?: string;
+  year?: number;
+  category?: PortfolioCategory;
+}
+
+export interface CategoryPreview {
+  slug: string;
+  title: string;
+  projectCount: number;
+  previewImages: string[];
+  projects: CategoryProjectItem[];
 }
 
 export interface MainFrameImage {
@@ -31,6 +52,7 @@ export interface PortfolioDetail {
   clientName?: string;
   year?: number;
   coverImage?: string;
+  category?: PortfolioCategory;
   mainFrameImages: MainFrameImage[];
   progressStages: ProgressStage[];
 }

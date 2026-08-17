@@ -7,7 +7,7 @@ import {
   NgZone,
   PLATFORM_ID,
 } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { CommonModule, isPlatformBrowser, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NavbarComponent } from '../../navbar/navbar.component';
 import { PortfolioService } from '../portfolio.service';
@@ -478,6 +478,7 @@ export class PortfolioDetailComponent implements OnInit, OnDestroy {
   private portfolioService = inject(PortfolioService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
   private cdr = inject(ChangeDetectorRef);
   private zone = inject(NgZone);
   private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
@@ -514,7 +515,7 @@ export class PortfolioDetailComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/portfolio']);
+    this.location.back();
   }
 
   prevSlide(): void {
