@@ -44,6 +44,7 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
     openapi_tags=_TAGS,
+    servers=[{"url": "/api", "description": "Production"}],
 )
 
 # -------------------------------
