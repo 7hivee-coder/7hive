@@ -191,19 +191,24 @@ import { ApiService, OurLeader } from '../services/api.service';
       box-shadow: var(--card-shadow);
     }
 
-    @media (max-width: 800px) {
+    @media (max-width: 600px) {
       .leader-card {
-        grid-template-columns: 120px 1fr;
-        gap: 16px;
-        padding: 16px;
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 20px;
+      }
+
+      .leader-img-wrap {
+        width: 100%;
+        aspect-ratio: 4 / 3;
       }
 
       .leader-title {
-        font-size: 18px;
+        font-size: 20px;
       }
 
       .leader-desc {
-        font-size: 13px;
+        font-size: 14px;
       }
     }
 
