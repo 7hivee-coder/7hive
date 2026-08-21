@@ -67,8 +67,11 @@ button[disabled] {
 }
 .submit-wrapper {
   display: flex;
+  flex-direction: row;
   justify-content: center;
+  gap: 12px;
   margin-top: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .submit-btn {
@@ -109,8 +112,32 @@ button[disabled] {
 }
 
 
+.whatsapp-btn {
+  min-width: 180px;
+  height: 54px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  background: #25D366;
+  color: #fff;
+  border: 1.5px solid #25D366;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.whatsapp-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(0,0,0,.18);
+  opacity: 0.92;
+}
+
 @media (max-width: 768px) {
-  .submit-btn {
+  .submit-btn, .whatsapp-btn {
     width: 100%;
     max-width: 340px;
     min-width: unset;
