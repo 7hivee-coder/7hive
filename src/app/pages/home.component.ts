@@ -42,17 +42,17 @@ import { ApiService, OurLeader } from '../services/api.service';
       <app-navbar></app-navbar>
 
       <!-- ===== OUR LEADER ===== -->
-      <section class="leader-section" *ngIf="leader">
-        <div class="leader-card">
-          <div class="leader-img-wrap">
-            <img [src]="leader.filepath" [alt]="leader.title" class="leader-img" />
-          </div>
-          <div class="leader-content">
-            <h2 class="leader-title">{{ leader.title }}</h2>
-            <p class="leader-desc">{{ leader.description }}</p>
-          </div>
-        </div>
-      </section>
+      // <section class="leader-section" *ngIf="leader">
+      //   <div class="leader-card">
+      //     <div class="leader-img-wrap">
+      //       <img [src]="leader.filepath" [alt]="leader.title" class="leader-img" />
+      //     </div>
+      //     <div class="leader-content">
+      //       <h2 class="leader-title">{{ leader.title }}</h2>
+      //       <p class="leader-desc">{{ leader.description }}</p>
+      //     </div>
+      //   </div>
+      // </section>
 
       <!-- ===== CATEGORY CARDS ===== -->
       <section class="categories-section">

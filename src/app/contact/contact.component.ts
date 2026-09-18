@@ -37,9 +37,14 @@ export class ContactComponent {
         this.submitted = true;
         this.contactForm.reset();
       },
-      error: () => {
+      error: (err) => {
         this.submitting = false;
-        this.submitError = 'Something went wrong. Please try again.';
+        const detail = err?.error?.detail ?? '';
+        if (detail === 'EMAIL_DOES_NOT_EXIST') {
+          this.submitError = 'This email address does not exist. Please check your email and try again.';
+        } else {
+          this.submitError = 'Something went wrong. Please try again.';
+        }
       }
     });
   }
