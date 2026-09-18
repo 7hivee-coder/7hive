@@ -1,7 +1,12 @@
 import os
 import shutil
 import secrets
+import logging
 from typing import List, Optional
+
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
+import dns.resolver
 
 from fastapi import (
     FastAPI,
@@ -22,6 +27,68 @@ from sqlalchemy.orm import Session
 
 import models, schemas, crud
 from database import engine, SessionLocal
+
+logger = logging.getLogger("uvicorn.error")
+
+# -------------------------------
+# AWS SES Configuration
+# -------------------------------
+AWS_REGION        = os.getenv("AWS_REGION", "ap-south-1")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
+AWS_SECRET_KEY    = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+OFFICIAL_EMAIL    = os.getenv("OFFICIAL_EMAIL", "7hivee@gmail.com")
+
+
+def _ses_client():
+    return boto3.client(
+        "ses",
+        region_name=AWS_REGION,
+        aws_access_key_id=AWS_ACCESS_KEY_ID or None,
+        aws_secret_access_key=AWS_SECRET_KEY or None,
+    )
+
+
+def email_domain_has_mx(email: str) -> bool:
+    """Return True if the email's domain has at least one MX record."""
+    try:
+        domain = email.rsplit("@", 1)[-1]
+        answers = dns.resolver.resolve(domain, "MX", lifetime=5)
+        return len(answers) > 0
+    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers,
+            dns.exception.Timeout, Exception):
+        return False
+
+
+def send_enquiry_notification(name: str, email: str, message: str) -> None:
+    """Send an email notification to the official inbox via AWS SES."""
+    try:
+        ses = _ses_client()
+        ses.send_email(
+            Source=OFFICIAL_EMAIL,
+            Destination={"ToAddresses": [OFFICIAL_EMAIL]},
+            Message={
+                "Subject": {"Data": f"New Query from {name} – 7Hive"},
+                "Body": {
+                    "Html": {
+                        "Data": (
+                            f"<h2>New Contact Query</h2>"
+                            f"<p><strong>Name:</strong> {name}</p>"
+                            f"<p><strong>Email:</strong> {email}</p>"
+                            f"<p><strong>Message:</strong></p>"
+                            f"<p>{message}</p>"
+                        )
+                    },
+                    "Text": {
+                        "Data": (
+                            f"New Contact Query\n\n"
+                            f"Name: {name}\nEmail: {email}\n\nMessage:\n{message}"
+                        )
+                    },
+                },
+            },
+        )
+    except (BotoCoreError, ClientError) as exc:
+        logger.error("SES send_email failed: %s", exc)
 
 # Create tables
 models.Base.metadata.create_all(bind=engine)
@@ -293,7 +360,19 @@ def create_enquiry(
     if "@" not in email or "." not in email:
         raise HTTPException(status_code=422, detail="Invalid email address")
 
-    return crud.create_enquiry(db, name=name, email=email, message=message)
+    # Verify the email domain has MX records (i.e. it can receive email)
+    if not email_domain_has_mx(email):
+        raise HTTPException(
+            status_code=422,
+            detail="EMAIL_DOES_NOT_EXIST"
+        )
+
+    db_enquiry = crud.create_enquiry(db, name=name, email=email, message=message)
+
+    # Fire-and-forget: notify the official inbox via SES
+    send_enquiry_notification(name, email, message)
+
+    return db_enquiry
 
 
 @app.get("/enquiries", response_model=List[schemas.EnquiryResponse], tags=["Messages"])
