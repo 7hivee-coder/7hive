@@ -57,3 +57,17 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+
+      <!-- ===== OUR LEADER ===== -->
+      // <section class="leader-section" *ngIf="leader">
+      //   <div class="leader-card">
+      //     <div class="leader-img-wrap">
+      //       <img [src]="leader.filepath" [alt]="leader.title" class="leader-img" />
+      //     </div>
+      //     <div class="leader-content">
+      //       <h2 class="leader-title">{{ leader.title }}</h2>
+      //       <p class="leader-desc">{{ leader.description }}</p>
+      //     </div>
+      //   </div>
+      // </section>
